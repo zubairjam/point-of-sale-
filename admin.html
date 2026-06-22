@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickPOS - Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background: rgba(79,70,229,0.1); }
+        .sidebar-item.active { background: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+        .fade-in { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .page-slide { animation: slideIn 0.3s ease; }
+        .modal-animate { animation: fadeIn 0.25s ease; }
+        .table-row { transition: all 0.15s ease; }
+        .table-row:hover { background: #f8f7ff; }
+        .badge { @apply px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+        .btn-primary { @apply bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-xl transition shadow-sm; }
+        .btn-secondary { @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-xl transition; }
+        .btn-danger { @apply bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-5 rounded-xl transition; }
+        .btn-success { @apply bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-5 rounded-xl transition; }
+        input, select, textarea { @apply border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-sm w-full; }
+        label { @apply text-sm font-medium text-gray-600 mb-1.5 block; }
+        .toast-enter { animation: toastIn 0.4s ease; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        .toast-exit { animation: toastOut 0.4s ease forwards; }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100px); } }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- ====== LOGIN SCREEN ====== -->
+    <div id="loginScreen" class="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-800 to-purple-900 flex items-center justify-center p-4">
+        <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 w-full max-w-md shadow-2xl border border-white/20 fade-in">
+            <div class="text-center mb-8">
+                <div class="bg-white/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-crown text-white text-3xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white">Admin Panel</h2>
+                <p class="text-indigo-200 text-sm mt-1">QuickPOS Management System</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-indigo-200 text-sm font-medium">Username</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300"></i>
+                        <input type="text" id="loginUser" value="admin" class="bg-white/10 border-white/20 text-white placeholder-indigo-300 pl-11">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-indigo-200 text-sm font-medium">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300"></i>
+                        <input type="password" id="loginPass" value="admin123" class="bg-white/10 border-white/20 text-white placeholder-indigo-300 pl-11"
+                        onkeydown="if(event.key==='Enter') login()">
+                    </div>
+                </div>
+                <button onclick="login()" class="w-full bg-white text-indigo-900 font-bold py-3.5 rounded-xl hover:bg-indigo-50 transition text-lg shadow-lg">
+                    <i class="fas fa-arrow-right-to-bracket mr-2"></i> Sign In
+                </button>
+                <p class="text-center text-indigo-300 text-xs">Default: admin / admin123</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== ADMIN DASHBOARD ====== -->
+    <div id="adminDashboard" class="hidden min-h-screen flex">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-lg z-10">
+            <div class="px-6 py-5 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 rounded-xl p-2">
+                        <i class="fas fa-crown text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-gray-800 text-lg leading-tight">QuickPOS</h2>
+                        <p class="text-xs text-gray-400">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+                <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="sidebar-item active w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left">
+                    <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
+                </button>
+                <button onclick="navigateTo('products')" id="nav-products" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left">
+                    <i class="fas fa-box w-5 text-center"></i> Products
+                </button>
+                <button onclick="navigateTo('orders')" id="nav-orders" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left">
+                    <i class="fas fa-receipt w-5 text-center"></i> Orders
+                </button>
+                <button onclick="navigateTo('categories')" id="nav-categories" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left">
+                    <i class="fas fa-tags w-5 text-center"></i> Categories
+                </button>
+                <button onclick="navigateTo('users')" id="nav-users" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left">
+                    <i class="fas fa-users w-5 text-center"></i> Staff Users
+                </button>
+                <button onclick="navigateTo('settings')" id="nav-settings" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left">
+                    <i class="fas fa-cog w-5 text-center"></i> Settings
+                </button>
+            </nav>
+
+            <div class="px-3 py-4 border-t border-gray-100">
+                <div class="flex items-center gap-3 px-4 py-3 bg-indigo-50 rounded-xl mb-3">
+                    <div class="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">A</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-gray-800 text-sm truncate" id="adminName">Administrator</p>
+                        <p class="text-xs text-gray-400">Super Admin</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i> Sign Out
+                </button>
+                <a href="index.html" target="_blank" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition mt-1">
+                    <i class="fas fa-cash-register w-5 text-center"></i> Open POS
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-white border-b border-gray-200 px-7 py-4 flex items-center justify-between shadow-sm">
+                <div>
+                    <h2 id="pageTitle" class="text-xl font-bold text-gray-800">Dashboard</h2>
+                    <p id="pageSubtitle" class="text-sm text-gray-400">Overview of your business</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2">
+                        <i class="fas fa-clock text-gray-400"></i>
+                        <span id="adminClock" class="font-mono text-sm font-medium text-gray-600"></span>
+                    </div>
+                    <button onclick="refreshData()" class="bg-gray-100 hover:bg-gray-200 rounded-xl p-2.5 transition">
+                        <i class="fas fa-sync-alt text-gray-500"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div id="pageContent" class="flex-1 overflow-y-auto scrollbar-thin p-7">
+                <!-- Dynamic content loads here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- ====== MODAL CONTAINER ====== -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div id="modalContent" class="modal-animate bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto p-6 mx-4">
+            <!-- Dynamic modal content -->
+        </div>
+    </div>
+
+    <!-- ====== TOAST ====== -->
+    <div id="adminToast" class="fixed top-6 right-6 z-[100] hidden">
+        <div class="bg-gray-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 toast-enter">
+            <i id="adminToastIcon" class="fas fa-check-circle text-green-400"></i>
+            <span id="adminToastMsg" class="font-medium text-sm"></span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA STORE ====================
+        // Products stored in localStorage shared with POS
+        let products = JSON.parse(localStorage.getItem('posProducts')) || [
+            { id: 1, name: "Espresso", price: 3.50, category: "Coffee", emoji: "☕", barcode: "1001", stock: 50, active: true },
+            { id: 2, name: "Cappuccino", price: 4.50, category: "Coffee", emoji: "☕", barcode: "1002", stock: 40, active: true },
+            { id: 3, name: "Latte", price: 4.75, category: "Coffee", emoji: "☕", barcode: "1003", stock: 35, active: true },
+            { id: 4, name: "Mocha", price: 5.25, category: "Coffee", emoji: "☕", barcode: "1004", stock: 30, active: true },
+            { id: 5, name: "Americano", price: 3.25, category: "Coffee", emoji: "☕", barcode: "1005", stock: 45, active: true },
+            { id: 6, name: "Cold Brew", price: 4.25, category: "Coffee", emoji: "🧊", barcode: "1006", stock: 25, active: true },
+            { id: 7, name: "Iced Tea", price: 3.00, category: "Drinks", emoji: "🍵", barcode: "2001", stock: 60, active: true },
+            { id: 8, name: "Lemonade", price: 3.50, category: "Drinks", emoji: "🍋", barcode: "2002", stock: 55, active: true },
+            { id: 9, name: "Orange Juice", price: 4.00, category: "Drinks", emoji: "🍊", barcode: "2003", stock: 40, active: true },
+            { id: 10, name: "Smoothie", price: 5.50, category: "Drinks", emoji: "🥤", barcode: "2004", stock: 20, active: true },
+            { id: 11, name: "Croissant", price: 3.75, category: "Bakery", emoji: "🥐", barcode: "3001", stock: 30, active: true },
+            { id: 12, name: "Muffin", price: 3.25, category: "Bakery", emoji: "🧁", barcode: "3002", stock: 25, active: true },
+            { id: 13, name: "Bagel", price: 2.75, category: "Bakery", emoji: "🥯", barcode: "3003", stock: 28, active: true },
+            { id: 14, name: "Scone", price: 3.50, category: "Bakery", emoji: "🍞", barcode: "3004", stock: 22, active: true },
+            { id: 15, name: "Cookie", price: 2.50, category: "Bakery", emoji: "🍪", barcode: "3005", stock: 80, active: true },
+            { id: 16, name: "Brownie", price: 3.00, category: "Bakery", emoji: "🍫", barcode: "3006", stock: 35, active: true },
+            { id: 17, name: "Sandwich", price: 7.50, category: "Food", emoji: "🥪", barcode: "4001", stock: 15, active: true },
+            { id: 18, name: "Salad", price: 8.50, category: "Food", emoji: "🥗", barcode: "4002", stock: 12, active: true },
+            { id: 19, name: "Wrap", price: 7.00, category: "Food", emoji: "🌯", barcode: "4003", stock: 18, active: true },
+            { id: 20, name: "Soup", price: 5.50, category: "Food", emoji: "🍲", barcode: "4004", stock: 20, active: true },
+            { id: 21, name: "Panini", price: 8.00, category: "Food", emoji: "🥖", barcode: "4005", stock: 14, active: true },
+            { id: 22, name: "Quiche", price: 6.50, category: "Food", emoji: "🥧", barcode: "4006", stock: 10, active: true },
+            { id: 23, name: "Cheesecake", price: 6.00, category: "Desserts", emoji: "🍰", barcode: "5001", stock: 12, active: true },
+            { id: 24, name: "Tiramisu", price: 6.50, category: "Desserts", emoji: "🍮", barcode: "5002", stock: 8, active: true },
+            { id: 25, name: "Ice Cream", price: 4.50, category: "Desserts", emoji: "🍦", barcode: "5003", stock: 30, active: true },
+            { id: 26, name: "Donut", price: 2.75, category: "Desserts", emoji: "🍩", barcode: "5004", stock: 40, active: true },
+            { id: 27, name: "Macarons", price: 5.00, category: "Desserts", emoji: "🧁", barcode: "5005", stock: 15, active: true },
+            { id: 28, name: "Coffee Beans 250g", price: 12.00, category: "Merch", emoji: "☕", barcode: "6001", stock: 25, active: true },
+            { id: 29, name: "Travel Mug", price: 15.00, category: "Merch", emoji: "🥤", barcode: "6002", stock: 20, active: true },
+            { id: 30, name: "T-Shirt", price: 25.00, category: "Merch", emoji: "👕", barcode: "6003", stock: 15, active: true },
+        ];
+
+        let orders = JSON.parse(localStorage.getItem('posOrders')) || [];
+        let categories = JSON.parse(localStorage.getItem('posCategories')) || ["Coffee","Drinks","Bakery","Food","Desserts","Merch"];
+        let users = JSON.parse(localStorage.getItem('posUsers')) || [
+            { id: 1, username: "admin", password: "admin123", name: "Administrator", role: "admin", active: true },
+            { id: 2, username: "staff1", password: "staff123", name: "John Staff", role: "cashier", active: true },
+        ];
+        let settings = JSON.parse(localStorage.getItem('posSettings')) || {
+            storeName: "QuickPOS Store",
+            storeAddress: "123 Main Street, City",
+            taxRate: 10,
+            currencySymbol: "$"
+        };
+
+        let currentPage = 'dashboard';
+        let editingProductId = null;
+        let editingUserId = null;
+        let editingCategory = null;
+        let nextProductId = 31;
+        let nextUserId = 3;
+
+        // Sync products to POS
+        function syncProducts() {
+            // Simplify products for POS (no stock/active fields needed there)
+            const posProducts = products.filter(p => p.active).map(p => ({
+                id: p.id, name: p.name, price: p.price, category: p.category, emoji: p.emoji, barcode: p.barcode
+            }));
+            localStorage.setItem('posProducts', JSON.stringify(posProducts));
+        }
+        syncProducts();
+
+        // ==================== AUTH ====================
+        function login() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const found = users.find(u => u.username === user && u.password === pass && u.active);
+            if (found) {
+                localStorage.setItem('posLoggedIn', JSON.stringify(found));
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                document.getElementById('adminName').textContent = found.name;
+                navigateTo('dashboard');
+                updateClock();
+                setInterval(updateClock, 1000);
+                showToast('Welcome back, ' + found.name + '!', 'success');
+            } else {
+                showToast('Invalid credentials', 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('posLoggedIn');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            showToast('Signed out successfully', 'info');
+        }
+
+        function updateClock() {
+            document.getElementById('adminClock').textContent = new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+        }
+
+        // Auto-login check
+        const savedUser = JSON.parse(localStorage.getItem('posLoggedIn'));
+        if (savedUser) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            document.getElementById('adminName').textContent = savedUser.name;
+            navigateTo('dashboard');
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // ==================== NAVIGATION ====================
+        function navigateTo(page) {
+            currentPage = page;
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            const navEl = document.getElementById('nav-' + page);
+            if (navEl) navEl.classList.add('active');
+
+            const titles = {
+                dashboard: ['Dashboard', 'Overview of your business'],
+                products: ['Products', 'Manage your product catalog'],
+                orders: ['Orders', 'View sales history and transactions'],
+                categories: ['Categories', 'Manage product categories'],
+                users: ['Staff Users', 'Manage user accounts and permissions'],
+                settings: ['Settings', 'Configure system preferences']
+            };
+            document.getElementById('pageTitle').textContent = titles[page][0];
+            document.getElementById('pageSubtitle').textContent = titles[page][1];
+
+            switch(page) {
+                case 'dashboard': renderDashboard(); break;
+                case 'products': renderProducts(); break;
+                case 'orders': renderOrders(); break;
+                case 'categories': renderCategories(); break;
+                case 'users': renderUsers(); break;
+                case 'settings': renderSettings(); break;
+            }
+        }
+
+        function refreshData() {
+            orders = JSON.parse(localStorage.getItem('posOrders')) || [];
+            navigateTo(currentPage);
+            showToast('Data refreshed', 'success');
+        }
+
+        // ==================== DASHBOARD ====================
+        function renderDashboard() {
+            const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
+            const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+            const lowStock = products.filter(p => p.stock <= 10 && p.stock > 0).length;
+            const outOfStock = products.filter(p => p.stock === 0).length;
+            const activeProducts = products.filter(p => p.active).length;
+
+            const currency = settings.currencySymbol || '$';
+            const monthlyOrders = orders.filter(o => {
+                const d = new Date(o.date);
+                const now = new Date();
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+
+            // Sales chart data (last 7 days)
+            const chartData = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = d.toDateString();
+                const dayOrders = orders.filter(o => new Date(o.date).toDateString() === ds);
+                chartData.push({
+                    day: d.toLocaleDateString('en', { weekday: 'short' }),
+                    amount: dayOrders.reduce((s, o) => s + (o.total || 0), 0),
+                    count: dayOrders.length
+                });
+            }
+            const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
+            const chartHeight = 140;
+
+            document.getElementById('pageContent').innerHTML = `
+                <div class="space-y-6 fade-in">
+                    <!-- Stat Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 font-medium">Today Revenue</p>
+                                    <p class="text-2xl font-bold text-gray-800 mt-1">${currency}${todayRevenue.toFixed(2)}</p>
+                                    <p class="text-xs text-gray-400 mt-1">${todayOrders.length} orders today</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 font-medium">Total Revenue</p>
+                                    <p class="text-2xl font-bold text-gray-800 mt-1">${currency}${revenue.toFixed(2)}</p>
+                                    <p class="text-xs text-gray-400 mt-1">${orders.length} total orders</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 font-medium">Active Products</p>
+                                    <p class="text-2xl font-bold text-gray-800 mt-1">${activeProducts}</p>
+                                    <p class="text-xs ${lowStock > 0 ? 'text-amber-500' : 'text-gray-400'} mt-1">${lowStock} low stock · ${outOfStock} out</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-box text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 font-medium">Monthly Orders</p>
+                                    <p class="text-2xl font-bold text-gray-800 mt-1">${monthlyOrders.length}</p>
+                                    <p class="text-xs text-gray-400 mt-1">${currency}${monthlyOrders.reduce((s, o) => s + (o.total||0), 0).toFixed(2)} this month</p>
+                                </div>
+                                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-calendar text-amber-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Sales Chart -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-5">
+                                <h3 class="font-bold text-gray-800">Weekly Sales</h3>
+                                <span class="text-xs text-gray-400">Last 7 days</span>
+                            </div>
+                            <div class="flex items-end justify-between gap-3" style="height: ${chartHeight}px;">
+                                ${chartData.map(d => {
+                                    const h = d.amount > 0 ? Math.max((d.amount / maxAmount) * chartHeight, 8) : 4;
+                                    return `
+                                        <div class="flex-1 flex flex-col items-center gap-1">
+                                            <span class="text-xs font-semibold text-gray-500">${currency}${d.amount.toFixed(0)}</span>
+                                            <div class="w-full bg-indigo-100 rounded-lg relative group cursor-pointer" style="height: ${h}px;">
+                                                <div class="absolute bottom-0 left-0 right-0 bg-indigo-500 rounded-lg transition-all duration-300 hover:bg-indigo-600" style="height: 100%;"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-400 mt-1">${d.day}</span>
+                                            <span class="text-xs font-medium text-indigo-600">${d.count}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Top Products -->
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-4">Top Selling Products</h3>
+                            ${(() => {
+                                // Calculate product sales from orders
+                                const productSales = {};
+                                orders.forEach(o => {
+                                    (o.items || []).forEach(item => {
+                                        const key = item.name || item.id;
+                                        productSales[key] = (productSales[key] || 0) + (item.qty || 0);
+                                    });
+                                });
+                                const sorted = Object.entries(productSales).sort((a,b) => b[1] - a[1]).slice(0, 6);
+                                if (sorted.length === 0) {
+                                    return '<p class="text-sm text-gray-400 text-center py-8">No sales data yet</p>';
+                                }
+                                const maxSale = Math.max(...sorted.map(s => s[1]), 1);
+                                return sorted.map(([name, qty]) => `
+                                    <div class="flex items-center gap-3 mb-3 last:mb-0">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-800 truncate">${name}</p>
+                                            <div class="w-full h-2 bg-gray-100 rounded-full mt-1">
+                                                <div class="h-2 bg-indigo-500 rounded-full" style="width: ${(qty/maxSale)*100}%"></div>
+                                            </div>
+                                        </div>
+                                        <span class="text-sm font-bold text-gray-700">${qty}</span>
+                                    </div>
+                                `).join('');
+                            })()}
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions & Recent Orders -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-4">Quick Actions</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="navigateTo('products')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl p-4 text-center transition">
+                                    <i class="fas fa-plus-circle text-xl mb-1"></i>
+                                    <p class="font-semibold text-sm">Add Product</p>
+                                </button>
+                                <button onclick="navigateTo('orders')" class="bg-green-50 hover:bg-green-100 text-green-700 rounded-xl p-4 text-center transition">
+                                    <i class="fas fa-file-invoice text-xl mb-1"></i>
+                                    <p class="font-semibold text-sm">View Orders</p>
+                                </button>
+                                <button onclick="navigateTo('users')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl p-4 text-center transition">
+                                    <i class="fas fa-user-plus text-xl mb-1"></i>
+                                    <p class="font-semibold text-sm">Manage Staff</p>
+                                </button>
+                                <button onclick="navigateTo('settings')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl p-4 text-center transition">
+                                    <i class="fas fa-cog text-xl mb-1"></i>
+                                    <p class="font-semibold text-sm">Settings</p>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-gray-800">Recent Orders</h3>
+                                <button onclick="navigateTo('orders')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">View all</button>
+                            </div>
+                            ${orders.length === 0 ? '<p class="text-sm text-gray-400 text-center py-8">No orders yet</p>' :
+                                orders.slice(-5).reverse().map(o => `
+                                    <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-800">#${o.orderNumber || 'N/A'}</p>
+                                            <p class="text-xs text-gray-400">${o.items ? o.items.reduce((s,i) => s + (i.qty||0), 0) : 0} items · ${new Date(o.date).toLocaleDateString()}</p>
+                                        </div>
+                                        <span class="font-bold text-gray-800">${currency}${(o.total || 0).toFixed(2)}</span>
+                                    </div>
+                                `).join('')
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== PRODUCTS ====================
+        function renderProducts() {
+            const currency = settings.currencySymbol || '$';
+            const filtered = products.filter(p => true);
+            document.getElementById('pageContent').innerHTML = `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4 flex-1">
+                            <input type="text" id="prodSearch" oninput="renderProducts()" placeholder="Search products..." class="max-w-xs">
+                            <select id="prodCatFilter" onchange="renderProducts()" class="max-w-[160px]">
+                                <option value="all">All Categories</option>
+                                ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <button onclick="showProductModal()" class="btn-primary flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Product
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-100">
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Product</th>
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Category</th>
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Barcode</th>
+                                    <th class="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Price</th>
+                                    <th class="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Stock</th>
+                                    <th class="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th class="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                                    const search = (document.getElementById('prodSearch')?.value || '').toLowerCase();
+                                    const catFilter = document.getElementById('prodCatFilter')?.value || 'all';
+                                    let list = products.filter(p => {
+                                        const matchSearch = !search || p.name.toLowerCase().includes(search) || p.barcode.includes(search);
+                                        const matchCat = catFilter === 'all' || p.category === catFilter;
+                                        return matchSearch && matchCat;
+                                    });
+                                    if (list.length === 0) return `<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-box-open text-3xl mb-2"></i><p>No products found</p></td></tr>`;
+                                    return list.map(p => `
+                                        <tr class="table-row border-b border-gray-50">
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="text-2xl">${p.emoji}</span>
+                                                    <span class="font-semibold text-gray-800">${p.name}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-5 py-4"><span class="badge bg-indigo-50 text-indigo-700">${p.category}</span></td>
+                                            <td class="px-5 py-4 text-sm text-gray-500 font-mono">${p.barcode}</td>
+                                            <td class="px-5 py-4 text-right font-bold text-gray-800">${currency}${p.price.toFixed(2)}</td>
+                                            <td class="px-5 py-4 text-center">
+                                                <span class="font-semibold ${p.stock <= 5 ? 'text-red-500' : p.stock <= 10 ? 'text-amber-500' : 'text-gray-800'}">${p.stock}</span>
+                                            </td>
+                                            <td class="px-5 py-4 text-center">
+                                                <span class="badge ${p.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${p.active ? 'Active' : 'Inactive'}</span>
+                                            </td>
+                                            <td class="px-5 py-4 text-right">
+                                                <div class="flex items-center justify-end gap-1">
+                                                    <button onclick="showProductModal(${p.id})" class="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button onclick="toggleProductStatus(${p.id})" class="p-2 hover:bg-amber-50 rounded-lg text-amber-600 transition" title="${p.active ? 'Deactivate' : 'Activate'}">
+                                                        <i class="fas ${p.active ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                                    </button>
+                                                    <button onclick="deleteProduct(${p.id})" class="p-2 hover:bg-red-50 rounded-lg text-red-500 transition" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('');
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showProductModal(id = null) {
+            const p = id ? products.find(x => x.id === id) : null;
+            editingProductId = id;
+            const title = id ? 'Edit Product' : 'Add Product';
+            const emojiList = ['☕','🧊','🍵','🍋','🍊','🥤','🥐','🧁','🥯','🍞','🍪','🍫','🥪','🥗','🌯','🍲','🥖','🥧','🍰','🍮','🍦','🍩','👕','🎒','🧢','👜','📱','💻','🎧','🖥️','📷','⌚','🏷️','🎁','🧴','🕯️','🌸','🧸','⚽','🎮','📚','✏️','🎵','🎨','🔧','🧰','🪴','🍿','🥨','🧀'];
+
+            openModal(`
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-box text-indigo-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">${title}</h3>
+                        <p class="text-sm text-gray-400">${id ? 'Update product details' : 'Add a new product to catalog'}</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label>Product Name</label>
+                            <input type="text" id="prodName" value="${p ? p.name : ''}" placeholder="e.g., Cappuccino">
+                        </div>
+                        <div>
+                            <label>Barcode / SKU</label>
+                            <input type="text" id="prodBarcode" value="${p ? p.barcode : ''}" placeholder="e.g., 1001">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label>Price (${settings.currencySymbol || '$'})</label>
+                            <input type="number" id="prodPrice" value="${p ? p.price : ''}" step="0.01" min="0">
+                        </div>
+                        <div>
+                            <label>Stock Quantity</label>
+                            <input type="number" id="prodStock" value="${p ? p.stock : '10'}" min="0">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label>Category</label>
+                            <select id="prodCategory">
+                                ${categories.map(c => `<option value="${c}" ${p && p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label>Emoji</label>
+                            <div class="flex items-center gap-2">
+                                <span id="emojiPreview" class="text-2xl">${p ? p.emoji : '☕'}</span>
+                                <select id="prodEmoji" onchange="document.getElementById('emojiPreview').textContent=this.value" class="flex-1">
+                                    ${emojiList.map(e => `<option value="${e}" ${p && p.emoji === e ? 'selected' : ''}>${e}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+                        <button onclick="saveProduct()" class="btn-primary">${id ? 'Update Product' : 'Add Product'}</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function saveProduct() {
+            const name = document.getElementById('prodName').value.trim();
+            const barcode = document.getElementById('prodBarcode').value.trim();
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const stock = parseInt(document.getElementById('prodStock').value) || 0;
+            const category = document.getElementById('prodCategory').value;
+            const emoji = document.getElementById('prodEmoji').value;
+
+            if (!name || !barcode || !price) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (editingProductId) {
+                const idx = products.findIndex(p => p.id === editingProductId);
+                if (idx !== -1) {
+                    products[idx] = { ...products[idx], name, barcode, price, stock, category, emoji };
+                }
+                showToast('Product updated', 'success');
+            } else {
+                const newId = nextProductId++;
+                products.push({ id: newId, name, price, category, emoji, barcode, stock, active: true });
+                showToast('Product added', 'success');
+            }
+
+            localStorage.setItem('posProducts', JSON.stringify(products));
+            syncProducts();
+            closeModal();
+            renderProducts();
+        }
+
+        function toggleProductStatus(id) {
+            const p = products.find(x => x.id === id);
+            if (p) {
+                p.active = !p.active;
+                localStorage.setItem('posProducts', JSON.stringify(products));
+                syncProducts();
+                renderProducts();
+                showToast(`Product ${p.active ? 'activated' : 'deactivated'}`, 'info');
+            }
+        }
+
+        function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+            products = products.filter(p => p.id !== id);
+            localStorage.setItem('posProducts', JSON.stringify(products));
+            syncProducts();
+            renderProducts();
+            showToast('Product deleted', 'success');
+        }
+
+        // ==================== ORDERS ====================
+        function renderOrders() {
+            const currency = settings.currencySymbol || '$';
+            document.getElementById('pageContent').innerHTML = `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4">
+                            <input type="text" id="orderSearch" oninput="renderOrders()" placeholder="Search order #..." class="max-w-xs">
+                            <select id="orderDateFilter" onchange="renderOrders()" class="max-w-[180px]">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-400">Revenue: </span>
+                            <span class="text-lg font-bold text-gray-800" id="orderRevenue">${currency}0.00</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-100">
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Order #</th>
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Customer</th>
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Items</th>
+                                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Payment</th>
+                                    <th class="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Total</th>
+                                    <th class="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                ${(() => {
+                                    const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+                                    const dateFilter = document.getElementById('orderDateFilter')?.value || 'all';
+                                    let list = [...orders];
+                                    
+                                    // Date filter
+                                    if (dateFilter !== 'all') {
+                                        const now = new Date();
+                                        list = list.filter(o => {
+                                            const d = new Date(o.date);
+                                            if (dateFilter === 'today') return d.toDateString() === now.toDateString();
+                                            if (dateFilter === 'week') {
+                                                const weekAgo = new Date(now);
+                                                weekAgo.setDate(weekAgo.getDate() - 7);
+                                                return d >= weekAgo;
+                                            }
+                                            if (dateFilter === 'month') {
+                                                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                                            }
+                                            return true;
+                                        });
+                                    }
+
+                                    // Search filter
+                                    if (search) {
+                                        list = list.filter(o => String(o.orderNumber || '').includes(search));
+                                    }
+
+                                    // Update revenue
+                                    const rev = list.reduce((s, o) => s + (o.total || 0), 0);
+                                    setTimeout(() => document.getElementById('orderRevenue').textContent = currency + rev.toFixed(2), 0);
+
+                                    if (list.length === 0) return `<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-receipt text-3xl mb-2"></i><p>No orders found</p></td></tr>`;
+                                    
+                                    return list.reverse().map(o => `
+                                        <tr class="table-row border-b border-gray-50">
+                                            <td class="px-5 py-4 font-semibold text-gray-800">#${o.orderNumber || 'N/A'}</td>
+                                            <td class="px-5 py-4 text-sm text-gray-500">${new Date(o.date).toLocaleDateString()} ${new Date(o.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+                                            <td class="px-5 py-4 text-sm text-gray-500">${o.customer || 'Walk-in'}</td>
+                                            <td class="px-5 py-4 text-sm text-gray-500">${o.items ? o.items.reduce((s,i) => s + (i.qty||0), 0) : 0}</td>
+                                            <td class="px-5 py-4">
+                                                <span class="badge ${o.payment === 'cash' ? 'bg-green-100 text-green-700' : o.payment === 'card' ? 'bg-blue-100 text-blue-700' : o.payment === 'mobile' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'} capitalize">${o.payment || 'cash'}</span>
+                                            </td>
+                                            <td class="px-5 py-4 text-right font-bold text-gray-800">${currency}${(o.total || 0).toFixed(2)}</td>
+                                            <td class="px-5 py-4 text-right">
+                                                <button onclick="viewOrderDetail(${o.orderNumber})" class="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition" title="View Details">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('');
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function viewOrderDetail(orderNumber) {
+            const o = orders.find(x => x.orderNumber === orderNumber);
+            if (!o) return;
+            const currency = settings.currencySymbol || '$';
+
+            openModal(`
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-receipt text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Order #${o.orderNumber}</h3>
+                        <p class="text-sm text-gray-400">${new Date(o.date).toLocaleDateString()} ${new Date(o.date).toLocaleTimeString()}</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                    <p class="text-sm font-medium text-gray-600 mb-1">Customer: <span class="text-gray-800">${o.customer || 'Walk-in'}</span></p>
+                    <p class="text-sm font-medium text-gray-600">Payment: <span class="capitalize badge ${o.payment === 'cash' ? 'bg-green-100 text-green-700' : o.payment === 'card' ? 'bg-blue-100 text-blue-700' : o.payment === 'mobile' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}">${o.payment || 'cash'}</span></p>
+                </div>
+                <div class="space-y-2 mb-4">
+                    ${(o.items || []).map(item => `
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm">${item.emoji || '📦'}</span>
+                                <span class="text-sm font-medium text-gray-800">${item.name || 'Product'} x${item.qty || 1}</span>
+                            </div>
+                            <span class="text-sm font-bold text-gray-800">${currency}${((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="border-t border-gray-200 pt-3 space-y-1">
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Subtotal</span>
+                        <span>${currency}${(o.subtotal || 0).toFixed(2)}</span>
+                    </div>
+                    ${o.discount > 0 ? `<div class="flex justify-between text-sm text-red-500"><span>Discount</span><span>-${currency}${(o.discount || 0).toFixed(2)}</span></div>` : ''}
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Tax (${o.taxRate || 10}%)</span>
+                        <span>${currency}${(o.tax || 0).toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
+                        <span>TOTAL</span>
+                        <span>${currency}${(o.total || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="flex justify-end pt-4 border-t border-gray-100 mt-4">
+                    <button onclick="closeModal()" class="btn-secondary">Close</button>
+                </div>
+            `);
+        }
+
+        // ==================== CATEGORIES ====================
+        function renderCategories() {
+            document.getElementById('pageContent').innerHTML = `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-sm text-gray-400">Manage product categories</p>
+                        <button onclick="showCategoryModal()" class="btn-primary flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Category
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${categories.map((c, i) => `
+                            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-tag text-indigo-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800">${c}</p>
+                                        <p class="text-xs text-gray-400">${products.filter(p => p.category === c).length} products</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="showCategoryModal('${c}')" class="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteCategory(${i})" class="p-2 hover:bg-red-50 rounded-lg text-red-500 transition">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showCategoryModal(name = null) {
+            editingCategory = name;
+            openModal(`
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tag text-purple-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">${name ? 'Edit Category' : 'Add Category'}</h3>
+                        <p class="text-sm text-gray-400">${name ? 'Rename this category' : 'Create a new product category'}</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label>Category Name</label>
+                        <input type="text" id="catName" value="${name || ''}" placeholder="e.g., Pastries">
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+                        <button onclick="saveCategory()" class="btn-primary">${name ? 'Update' : 'Create'}</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function saveCategory() {
+            const name = document.getElementById('catName').value.trim();
+            if (!name) { showToast('Category name is required', 'error'); return; }
+
+            if (editingCategory) {
+                const idx = categories.indexOf(editingCategory);
+                if (idx !== -1) {
+                    const oldName = editingCategory;
+                    categories[idx] = name;
+                    // Update all products with this category
+                    products.forEach(p => {
+                        if (p.category === oldName) p.category = name;
+                    });
+                    localStorage.setItem('posProducts', JSON.stringify(products));
+                    syncProducts();
+                }
+                showToast('Category updated', 'success');
+            } else {
+                if (categories.includes(name)) {
+                    showToast('Category already exists', 'error');
+                    return;
+                }
+                categories.push(name);
+                showToast('Category created', 'success');
+            }
+            localStorage.setItem('posCategories', JSON.stringify(categories));
+            closeModal();
+            renderCategories();
+        }
+
+        function deleteCategory(index) {
+            const name = categories[index];
+            const prodCount = products.filter(p => p.category === name).length;
+            if (prodCount > 0) {
+                if (!confirm(`"${name}" has ${prodCount} product(s). Are you sure?`)) return;
+            } else {
+                if (!confirm(`Delete category "${name}"?`)) return;
+            }
+            categories.splice(index, 1);
+            localStorage.setItem('posCategories', JSON.stringify(categories));
+            renderCategories();
+            showToast('Category deleted', 'success');
+        }
+
+        // ==================== USERS ====================
+        function renderUsers() {
+            document.getElementById('pageContent').innerHTML = `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-sm text-gray-400">Manage staff accounts</p>
+                        <button onclick="showUserModal()" class="btn-primary flex items-center gap-2">
+                            <i class="fas fa-user-plus"></i> Add Staff
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        ${users.map((u, i) => `
+                            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 ${u.role === 'admin' ? 'bg-indigo-100' : 'bg-green-100'} rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-user ${u.role === 'admin' ? 'text-indigo-600' : 'text-green-600'}"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800">${u.name} <span class="badge ${u.role === 'admin' ? 'bg-indigo-50 text-indigo-700' : 'bg-green-50 text-green-700'} ml-2 capitalize">${u.role}</span></p>
+                                        <p class="text-xs text-gray-400">@${u.username}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="badge ${u.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${u.active ? 'Active' : 'Inactive'}</span>
+                                    <button onclick="showUserModal(${i})" class="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    ${u.role !== 'admin' ? `
+                                        <button onclick="toggleUserStatus(${i})" class="p-2 hover:bg-amber-50 rounded-lg text-amber-600 transition">
+                                            <i class="fas ${u.active ? 'fa-ban' : 'fa-check'}"></i>
+                                        </button>
+                                        <button onclick="deleteUser(${i})" class="p-2 hover:bg-red-50 rounded-lg text-red-500 transition">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showUserModal(index = null) {
+            const u = index !== null ? users[index] : null;
+            editingUserId = index;
+            openModal(`
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-user-cog text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">${u ? 'Edit Staff' : 'Add Staff'}</h3>
+                        <p class="text-sm text-gray-400">${u ? 'Update staff details' : 'Create new staff account'}</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label>Full Name</label>
+                            <input type="text" id="userName" value="${u ? u.name : ''}" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label>Username</label>
+                            <input type="text" id="userUsername" value="${u ? u.username : ''}" placeholder="staff2">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label>Password</label>
+                            <input type="password" id="userPassword" value="${u ? u.password : ''}" placeholder="${u ? 'Leave blank to keep' : 'Enter password'}">
+                        </div>
+                        <div>
+                            <label>Role</label>
+                            <select id="userRole">
+                                <option value="cashier" ${u && u.role === 'cashier' ? 'selected' : ''}>Cashier</option>
+                                <option value="admin" ${u && u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+                        <button onclick="saveUser()" class="btn-primary">${u ? 'Update' : 'Create'}</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function saveUser() {
+            const name = document.getElementById('userName').value.trim();
+            const username = document.getElementById('userUsername').value.trim();
+            const password = document.getElementById('userPassword').value.trim();
+            const role = document.getElementById('userRole').value;
+
+            if (!name || !username || !password && editingUserId === null) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            if (editingUserId !== null) {
+                const u = users[editingUserId];
+                u.name = name;
+                u.username = username;
+                if (password) u.password = password;
+                u.role = role;
+                showToast('User updated', 'success');
+            } else {
+                if (users.some(u => u.username === username)) {
+                    showToast('Username already exists', 'error');
+                    return;
+                }
+                const newId = nextUserId++;
+                users.push({ id: newId, username, password, name, role, active: true });
+                showToast('User created', 'success');
+            }
+            localStorage.setItem('posUsers', JSON.stringify(users));
+            closeModal();
+            renderUsers();
+        }
+
+        function toggleUserStatus(index) {
+            users[index].active = !users[index].active;
+            localStorage.setItem('posUsers', JSON.stringify(users));
+            renderUsers();
+            showToast(`User ${users[index].active ? 'activated' : 'deactivated'}`, 'info');
+        }
+
+        function deleteUser(index) {
+            if (!confirm('Delete this user?')) return;
+            users.splice(index, 1);
+            localStorage.setItem('posUsers', JSON.stringify(users));
+            renderUsers();
+            showToast('User deleted', 'success');
+        }
+
+        // ==================== SETTINGS ====================
+        function renderSettings() {
+            document.getElementById('pageContent').innerHTML = `
+                <div class="fade-in max-w-2xl space-y-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-store text-indigo-600"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg">Store Information</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label>Store Name</label>
+                                <input type="text" id="setStoreName" value="${settings.storeName || ''}">
+                            </div>
+                            <div>
+                                <label>Store Address</label>
+                                <input type="text" id="setStoreAddress" value="${settings.storeAddress || ''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-calculator text-green-600"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg">Tax & Currency</h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label>Tax Rate (%)</label>
+                                <input type="number" id="setTaxRate" value="${settings.taxRate || 10}" min="0" max="50" step="0.5">
+                            </div>
+                            <div>
+                                <label>Currency Symbol</label>
+                                <select id="setCurrency">
+                                    <option value="$" ${settings.currencySymbol === '$' ? 'selected' : ''}>$ (USD)</option>
+                                    <option value="€" ${settings.currencySymbol === '€' ? 'selected' : ''}>€ (EUR)</option>
+                                    <option value="£" ${settings.currencySymbol === '£' ? 'selected' : ''}>£ (GBP)</option>
+                                    <option value="¥" ${settings.currencySymbol === '¥' ? 'selected' : ''}>¥ (JPY)</option>
+                                    <option value="₹" ${settings.currencySymbol === '₹' ? 'selected' : ''}>₹ (INR)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-database text-red-600"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg">Data Management</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p class="font-semibold text-gray-700">Export Orders Data</p>
+                                    <p class="text-xs text-gray-400">Download all orders as CSV</p>
+                                </div>
+                                <button onclick="exportOrders()" class="btn-primary text-sm py-2 px-4">
+                                    <i class="fas fa-download mr-1"></i> Export
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p class="font-semibold text-gray-700">Clear All Orders</p>
+                                    <p class="text-xs text-gray-400">Remove all order history permanently</p>
+                                </div>
+                                <button onclick="clearAllOrders()" class="btn-danger text-sm py-2 px-4">
+                                    <i class="fas fa-trash mr-1"></i> Clear
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p class="font-semibold text-gray-700">Reset To Defaults</p>
+                                    <p class="text-xs text-gray-400">Reset all products, categories, and settings</p>
+                                </div>
+                                <button onclick="resetToDefaults()" class="btn bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-xl transition text-sm">
+                                    <i class="fas fa-undo mr-1"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button onclick="saveAdminSettings()" class="btn-primary text-base py-3 px-8">
+                            <i class="fas fa-save mr-2"></i> Save All Settings
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveAdminSettings() {
+            settings.storeName = document.getElementById('setStoreName').value;
+            settings.storeAddress = document.getElementById('setStoreAddress').value;
+            settings.taxRate = parseFloat(document.getElementById('setTaxRate').value) || 10;
+            settings.currencySymbol = document.getElementById('setCurrency').value;
+            localStorage.setItem('posSettings', JSON.stringify(settings));
+            
+            // Sync tax rate to POS
+            localStorage.setItem('posTaxRate', settings.taxRate.toString());
+            localStorage.setItem('posCurrency', settings.currencySymbol);
+
+            showToast('Settings saved successfully', 'success');
+        }
+
+        function exportOrders() {
+            if (orders.length === 0) {
+                showToast('No orders to export', 'error');
+                return;
+            }
+            let csv = 'Order #,Date,Customer,Items,Payment,Subtotal,Discount,Tax,Total\n';
+            orders.forEach(o => {
+                csv += `#${o.orderNumber},"${new Date(o.date).toLocaleDateString()}","${o.customer || 'Walk-in'}",${o.items ? o.items.reduce((s,i) => s + (i.qty||0), 0) : 0},${o.payment || 'cash'},${(o.subtotal||0).toFixed(2)},${(o.discount||0).toFixed(2)},${(o.tax||0).toFixed(2)},${(o.total||0).toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `orders_export_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Orders exported', 'success');
+        }
+
+        function clearAllOrders() {
+            if (!confirm('Are you sure you want to delete ALL orders? This cannot be undone.')) return;
+            if (!confirm('Double confirm: delete all order history?')) return;
+            orders = [];
+            localStorage.setItem('posOrders', JSON.stringify(orders));
+            showToast('All orders cleared', 'info');
+            navigateTo('dashboard');
+        }
+
+        function resetToDefaults() {
+            if (!confirm('This will reset all products, categories, and settings to factory defaults. Continue?')) return;
+            localStorage.removeItem('posProducts');
+            localStorage.removeItem('posCategories');
+            localStorage.removeItem('posSettings');
+            location.reload();
+        }
+
+        // ==================== MODAL ====================
+        function openModal(html) {
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('adminToast');
+            const icon = document.getElementById('adminToastIcon');
+            const msg = document.getElementById('adminToastMsg');
+
+            msg.textContent = message;
+            icon.className = type === 'success' ? 'fas fa-check-circle text-green-400' :
+                            type === 'error' ? 'fas fa-exclamation-circle text-red-400' :
+                            'fas fa-info-circle text-blue-400';
+
+            toast.classList.remove('hidden');
+            const inner = toast.querySelector('div');
+            inner.classList.remove('toast-exit');
+            inner.classList.add('toast-enter');
+
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                inner.classList.remove('toast-enter');
+                inner.classList.add('toast-exit');
+                setTimeout(() => toast.classList.add('hidden'), 400);
+            }, 2500);
+        }
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+            if (e.ctrlKey && e.key === 'l') { e.preventDefault(); logout(); }
+        });
+
+        // ==================== RECEIVE ORDER FROM POS ====================
+        // Watch for orders saved to localStorage by POS
+        setInterval(() => {
+            const posOrders = localStorage.getItem('posOrders');
+            if (posOrders) {
+                const parsed = JSON.parse(posOrders);
+                if (JSON.stringify(parsed) !== JSON.stringify(orders)) {
+                    orders = parsed;
+                    if (currentPage === 'dashboard') renderDashboard();
+                    if (currentPage === 'orders') renderOrders();
+                }
+            }
+        }, 1000);
+
+        // Also listen for storage events from other tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'posOrders') {
+                orders = JSON.parse(e.newValue || '[]');
+                if (currentPage === 'dashboard') renderDashboard();
+                if (currentPage === 'orders') renderOrders();
+            }
+        });
+
+        console.log('%c 🛒 QuickPOS Admin Panel v1.0 ', 'background:#4f46e5;color:white;font-size:18px;font-weight:bold;padding:12px 20px;border-radius:8px;');
+        console.log('%c Default Login: admin / admin123', 'color:#6b7280;font-size:13px;');
+    </script>
+</body>
+</html>
