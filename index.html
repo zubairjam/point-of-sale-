@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
         .scrollbar-thin::-webkit-scrollbar { width: 6px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
@@ -30,6 +30,51 @@
         .print-only { display: none; }
         .num-key { transition: all 0.1s ease; }
         .num-key:active { transform: scale(0.93); background: #e0e7ff; }
+
+        /* ====== DARK MODE ====== */
+        .dark { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-gray-100 { background-color: #0f172a !important; }
+        .dark .bg-gray-50 { background-color: #1e293b !important; }
+        .dark .bg-white { background-color: #1e293b !important; }
+        .dark .bg-indigo-50 { background-color: #312e81 !important; }
+        .dark .bg-green-50 { background-color: #064e3b !important; }
+        .dark .bg-green-100 { background-color: #065f46 !important; }
+        .dark .bg-blue-50 { background-color: #1e3a5f !important; }
+        .dark .bg-red-50 { background-color: #7f1d1d !important; }
+        .dark .bg-purple-50 { background-color: #4c1d95 !important; }
+        .dark .bg-amber-50 { background-color: #78350f !important; }
+        .dark .bg-indigo-100 { background-color: #3730a3 !important; }
+        .dark .border-gray-200, .dark .border-gray-100 { border-color: #334155 !important; }
+        .dark .text-gray-800 { color: #f1f5f9 !important; }
+        .dark .text-gray-700 { color: #e2e8f0 !important; }
+        .dark .text-gray-600 { color: #cbd5e1 !important; }
+        .dark .text-gray-500 { color: #94a3b8 !important; }
+        .dark .text-gray-400 { color: #64748b !important; }
+        .dark .text-gray-300 { color: #475569 !important; }
+        .dark .text-gray-200 { color: #334155 !important; }
+        .dark .text-indigo-600 { color: #818cf8 !important; }
+        .dark .text-indigo-700 { color: #a5b4fc !important; }
+        .dark .text-red-500 { color: #f87171 !important; }
+        .dark .text-red-600 { color: #fca5a5 !important; }
+        .dark .text-green-700 { color: #6ee7b7 !important; }
+        .dark .text-blue-500 { color: #60a5fa !important; }
+        .dark .text-purple-700 { color: #c4b5fd !important; }
+        .dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+        .dark .shadow-xl { box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important; }
+        .dark .product-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+        .dark input, .dark select, .dark textarea {
+            background-color: #1e293b !important; color: #e2e8f0 !important; border-color: #475569 !important;
+        }
+        .dark input::placeholder { color: #64748b !important; }
+        .dark input:focus, .dark select:focus { border-color: #818cf8 !important; }
+        .dark .category-btn:not(.active) { background-color: #1e293b; border-color: #334155; color: #cbd5e1; }
+        .dark .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .dark .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; }
+        .dark .num-key { background-color: #334155; color: #e2e8f0; }
+        .dark .num-key:hover { background-color: #475569; }
+        /* Theme toggle animation */
+        .theme-toggle { transition: all 0.3s ease; }
+        .theme-toggle:hover { transform: rotate(20deg) scale(1.1); }
     </style>
 </head>
 <body class="bg-gray-100 h-screen overflow-hidden">
@@ -58,7 +103,13 @@
                 <div class="pulse-dot w-2 h-2 bg-green-400 rounded-full"></div>
                 <span class="text-sm text-indigo-100">Online</span>
             </div>
-            <button onclick="openSettings()" class="hover:bg-white/10 rounded-lg p-2 transition">
+            <button onclick="toggleDarkMode()" id="darkModeToggle" class="theme-toggle hover:bg-white/10 rounded-lg p-2 transition" title="Toggle Dark Mode">
+                <i class="fas fa-moon text-lg"></i>
+            </button>
+            <a href="admin.html" target="_blank" class="hover:bg-white/10 rounded-lg p-2 transition" title="Admin Panel">
+                <i class="fas fa-crown text-lg"></i>
+            </a>
+            <button onclick="openSettings()" class="hover:bg-white/10 rounded-lg p-2 transition" title="Settings">
                 <i class="fas fa-cog text-lg"></i>
             </button>
         </div>
@@ -340,6 +391,7 @@
                 <div>
                     <label class="text-sm font-medium text-gray-600 mb-1 block">Currency Symbol</label>
                     <select id="currencySymbol" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        <option value="Rs" selected>Rs (PKR)</option>
                         <option value="$">$ (USD)</option>
                         <option value="€">€ (EUR)</option>
                         <option value="£">£ (GBP)</option>
@@ -364,7 +416,8 @@
 
     <script>
         // ==================== DATA ====================
-        const products = [
+        // Load products from localStorage (synced with Admin Panel) or use defaults
+        const defaultProducts = [
             // Coffee & Drinks
             { id: 1, name: "Espresso", price: 3.50, category: "Coffee", emoji: "☕", barcode: "1001" },
             { id: 2, name: "Cappuccino", price: 4.50, category: "Coffee", emoji: "☕", barcode: "1002" },
@@ -401,6 +454,10 @@
             { id: 30, name: "T-Shirt", price: 25.00, category: "Merch", emoji: "👕", barcode: "6003" },
         ];
 
+        // Use products from Admin Panel (localStorage) if available, otherwise defaults
+        const storedProducts = JSON.parse(localStorage.getItem('posProducts'));
+        const products = storedProducts && storedProducts.length > 0 ? storedProducts : defaultProducts;
+
         const categoryColors = {
             "All": "bg-gray-500",
             "Coffee": "bg-amber-600",
@@ -427,7 +484,26 @@
             document.getElementById('taxRate').value = settings.taxRate;
             document.getElementById('taxRateDisplay').textContent = settings.taxRate;
         }
-        if (settings.currencySymbol) document.getElementById('currencySymbol').value = settings.currencySymbol;
+        if (settings.currencySymbol) {
+            document.getElementById('currencySymbol').value = settings.currencySymbol;
+        } else {
+            settings.currencySymbol = 'Rs';
+        }
+
+        // ====== DARK MODE ======
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle('dark');
+            const isDark = body.classList.contains('dark');
+            localStorage.setItem('posDarkMode', isDark ? 'true' : 'false');
+            const icon = document.querySelector('#darkModeToggle i');
+            icon.className = isDark ? 'fas fa-sun text-lg' : 'fas fa-moon text-lg';
+        }
+        // Load dark mode preference
+        if (localStorage.getItem('posDarkMode') === 'true') {
+            document.body.classList.add('dark');
+            document.querySelector('#darkModeToggle i').className = 'fas fa-sun text-lg';
+        }
 
         // ==================== INIT ====================
         function init() {
@@ -751,11 +827,37 @@
                 }
             }
 
+            // Calculate order totals for saving
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const discountVal = parseFloat(document.getElementById('discountValue').value) || 0;
+            const discountType = document.getElementById('discountType').value;
+            let discount = discountType === 'percent' ? subtotal * (Math.min(discountVal, 100) / 100) : Math.min(discountVal, subtotal);
+            const afterDiscount = subtotal - discount;
+            const taxRateVal = parseFloat(document.getElementById('taxRate').value) || 10;
+            const tax = afterDiscount * (taxRateVal / 100);
+
             // Generate receipt
             orderNumber++;
             localStorage.setItem('orderNumber', orderNumber);
 
-            generateReceipt();
+            // Save order to localStorage for admin panel
+            const order = {
+                orderNumber: orderNumber,
+                date: new Date().toISOString(),
+                customer: document.getElementById('customerName').value.trim() || 'Walk-in',
+                items: cart.map(item => ({ id: item.id, name: item.name, price: item.price, qty: item.qty, emoji: item.emoji, category: item.category })),
+                payment: paymentMethod,
+                subtotal: subtotal,
+                discount: discount,
+                taxRate: taxRateVal,
+                tax: tax,
+                total: total
+            };
+            const existingOrders = JSON.parse(localStorage.getItem('posOrders') || '[]');
+            existingOrders.push(order);
+            localStorage.setItem('posOrders', JSON.stringify(existingOrders));
+
+            generateReceipt(order);
             closePayment();
 
             // Clear cart
@@ -955,7 +1057,7 @@
 
         // ==================== HELPERS ====================
         function getCurrency() {
-            return document.getElementById('currencySymbol').value || '$';
+            return document.getElementById('currencySymbol').value || 'Rs';
         }
 
         function showToast(message, type = 'success') {
@@ -1005,6 +1107,20 @@
 
         // ==================== START ====================
         init();
+
+        // Listen for settings/products changes from Admin Panel
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'posProducts') {
+                const newProducts = JSON.parse(e.newValue);
+                if (newProducts && newProducts.length > 0) {
+                    // Reload products and re-render
+                    location.reload();
+                }
+            }
+            if (e.key === 'posSettings') {
+                location.reload();
+            }
+        });
     </script>
 </body>
 </html>
