@@ -9,6 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         * { font-family: 'Inter', sans-serif; }
+        body { transition: background-color 0.3s, color 0.3s; }
         .sidebar-item { transition: all 0.2s ease; }
         .sidebar-item:hover { background: rgba(79,70,229,0.1); }
         .sidebar-item.active { background: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
@@ -35,6 +36,65 @@
         @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
         .toast-exit { animation: toastOut 0.4s ease forwards; }
         @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100px); } }
+
+        /* ====== DARK MODE ====== */
+        .dark { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-gray-50 { background-color: #0f172a !important; }
+        .dark .bg-gray-100 { background-color: #0f172a !important; }
+        .dark .bg-white { background-color: #1e293b !important; }
+        .dark .bg-indigo-50 { background-color: #312e81 !important; }
+        .dark .bg-green-50 { background-color: #064e3b !important; }
+        .dark .bg-green-100 { background-color: #065f46 !important; }
+        .dark .bg-blue-50 { background-color: #1e3a5f !important; }
+        .dark .bg-blue-100 { background-color: #1e40af !important; }
+        .dark .bg-red-50 { background-color: #7f1d1d !important; }
+        .dark .bg-red-100 { background-color: #991b1b !important; }
+        .dark .bg-purple-50 { background-color: #4c1d95 !important; }
+        .dark .bg-purple-100 { background-color: #5b21b6 !important; }
+        .dark .bg-amber-50 { background-color: #78350f !important; }
+        .dark .bg-amber-100 { background-color: #92400e !important; }
+        .dark .bg-indigo-100 { background-color: #3730a3 !important; }
+        .dark .border-gray-200, .dark .border-gray-100 { border-color: #334155 !important; }
+        .dark .text-gray-800 { color: #f1f5f9 !important; }
+        .dark .text-gray-700 { color: #e2e8f0 !important; }
+        .dark .text-gray-600 { color: #cbd5e1 !important; }
+        .dark .text-gray-500 { color: #94a3b8 !important; }
+        .dark .text-gray-400 { color: #64748b !important; }
+        .dark .text-gray-300 { color: #475569 !important; }
+        .dark .text-indigo-600 { color: #818cf8 !important; }
+        .dark .text-indigo-700 { color: #a5b4fc !important; }
+        .dark .text-red-500 { color: #f87171 !important; }
+        .dark .text-red-600 { color: #fca5a5 !important; }
+        .dark .text-green-600 { color: #6ee7b7 !important; }
+        .dark .text-green-700 { color: #6ee7b7 !important; }
+        .dark .text-blue-600 { color: #60a5fa !important; }
+        .dark .text-purple-600 { color: #c4b5fd !important; }
+        .dark .text-amber-600 { color: #fbbf24 !important; }
+        .dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+        .dark .shadow-lg { box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important; }
+        .dark .stat-card:hover { box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+        .dark input, .dark select, .dark textarea {
+            background-color: #1e293b !important; color: #e2e8f0 !important; border-color: #475569 !important;
+        }
+        .dark input::placeholder { color: #64748b !important; }
+        .dark input:focus, .dark select:focus { border-color: #818cf8 !important; }
+        .dark .sidebar-item:not(.active) { color: #cbd5e1; }
+        .dark .sidebar-item:not(.active):hover { background: rgba(79,70,229,0.2); }
+        .dark .table-row:hover { background: #1e293b !important; }
+        .dark .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .dark .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; }
+        .dark .btn-secondary { background-color: #334155 !important; color: #e2e8f0 !important; }
+        .dark .btn-secondary:hover { background-color: #475569 !important; }
+        .dark .badge.bg-indigo-50 { background-color: #3730a3 !important; }
+        .dark .badge.bg-green-100 { background-color: #065f46 !important; color: #6ee7b7 !important; }
+        .dark .badge.bg-blue-100 { background-color: #1e40af !important; color: #93c5fd !important; }
+        .dark .badge.bg-purple-100 { background-color: #5b21b6 !important; color: #c4b5fd !important; }
+        .dark .badge.bg-red-100 { background-color: #991b1b !important; color: #fca5a5 !important; }
+        .dark .badge.bg-amber-100 { background-color: #92400e !important; }
+        .dark .badge.bg-green-50 { background-color: #064e3b !important; }
+        .dark .badge.bg-indigo-100 { background-color: #3730a3 !important; }
+        .theme-toggle { transition: all 0.3s ease; }
+        .theme-toggle:hover { transform: rotate(20deg) scale(1.1); }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -141,6 +201,9 @@
                         <i class="fas fa-clock text-gray-400"></i>
                         <span id="adminClock" class="font-mono text-sm font-medium text-gray-600"></span>
                     </div>
+                    <button onclick="toggleDarkMode()" id="adminDarkToggle" class="theme-toggle bg-gray-100 hover:bg-gray-200 rounded-xl p-2.5 transition" title="Toggle Dark Mode">
+                        <i class="fas fa-moon text-gray-500"></i>
+                    </button>
                     <button onclick="refreshData()" class="bg-gray-100 hover:bg-gray-200 rounded-xl p-2.5 transition">
                         <i class="fas fa-sync-alt text-gray-500"></i>
                     </button>
@@ -215,7 +278,7 @@
             storeName: "QuickPOS Store",
             storeAddress: "123 Main Street, City",
             taxRate: 10,
-            currencySymbol: "$"
+            currencySymbol: "Rs"
         };
 
         let currentPage = 'dashboard';
@@ -248,6 +311,11 @@
                 navigateTo('dashboard');
                 updateClock();
                 setInterval(updateClock, 1000);
+                // Apply dark mode icon after login
+                if (localStorage.getItem('posDarkMode') === 'true') {
+                    const icon = document.querySelector('#adminDarkToggle i');
+                    if (icon) icon.className = 'fas fa-sun text-yellow-400';
+                }
                 showToast('Welcome back, ' + found.name + '!', 'success');
             } else {
                 showToast('Invalid credentials', 'error');
@@ -259,6 +327,21 @@
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('adminDashboard').classList.add('hidden');
             showToast('Signed out successfully', 'info');
+        }
+
+        // ====== DARK MODE ======
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('posDarkMode', isDark ? 'true' : 'false');
+            const icon = document.querySelector('#adminDarkToggle i');
+            icon.className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-500';
+        }
+        // Load dark mode preference
+        if (localStorage.getItem('posDarkMode') === 'true') {
+            document.body.classList.add('dark');
+            const icon = document.querySelector('#adminDarkToggle i');
+            if (icon) icon.className = 'fas fa-sun text-yellow-400';
         }
 
         function updateClock() {
@@ -276,6 +359,11 @@
             navigateTo('dashboard');
             updateClock();
             setInterval(updateClock, 1000);
+            // Apply dark mode icon after dashboard is visible
+            if (localStorage.getItem('posDarkMode') === 'true') {
+                const icon = document.querySelector('#adminDarkToggle i');
+                if (icon) icon.className = 'fas fa-sun text-yellow-400';
+            }
         }
 
         // ==================== NAVIGATION ====================
@@ -1117,6 +1205,7 @@
                             <div>
                                 <label>Currency Symbol</label>
                                 <select id="setCurrency">
+                                    <option value="Rs" ${settings.currencySymbol === 'Rs' ? 'selected' : ''}>Rs (PKR)</option>
                                     <option value="$" ${settings.currencySymbol === '$' ? 'selected' : ''}>$ (USD)</option>
                                     <option value="€" ${settings.currencySymbol === '€' ? 'selected' : ''}>€ (EUR)</option>
                                     <option value="£" ${settings.currencySymbol === '£' ? 'selected' : ''}>£ (GBP)</option>
